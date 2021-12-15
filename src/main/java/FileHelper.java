@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -6,6 +8,20 @@ import java.util.*;
 
 public class FileHelper {
 
+    private static final Map<String, String> informationAboutCommands = new HashMap<>();
+
+    private static final String COMMAND_NOT_FOUND_ERROR_TEXT = "Three is no such command: ";
+
+    static {
+        informationAboutCommands.put("find", "Returns all files and directories of given directory and it's subdirectories");
+        informationAboutCommands.put("ls", "Returns List of all files and directories paths of given directory");
+        informationAboutCommands.put("cat", "Returns String, which contains file's data");
+        informationAboutCommands.put("rm", "Removes give file or directory");
+        informationAboutCommands.put("mv", "Moves file or directory from path1 to path2");
+        informationAboutCommands.put("cmp", "Compares two files");
+        informationAboutCommands.put("help", "Command used to get information about commands");
+    }
+
     private FileHelper(){}
 
     public static List<String> find(String path) {
@@ -13,9 +29,7 @@ public class FileHelper {
 
         File file = new File(path);
 
-        if (!file.exists()) {
-            return result;
-        }
+        if (!file.exists()) return result;
 
         Queue<File> fileQueue = new PriorityQueue<>();
 
@@ -23,16 +37,11 @@ public class FileHelper {
 
         while (!fileQueue.isEmpty()) {
             File current = fileQueue.poll();
-
-            if (current.isFile()) {
-                result.add(current.getPath());
-                continue;
-            }
-
             result.add(current.getPath());
 
-            File[] tmp = current.listFiles();
+            if (current.isFile()) continue;
 
+            File[] tmp = current.listFiles();
             if (tmp == null) continue;
 
             fileQueue.addAll(Arrays.asList(tmp));
@@ -60,28 +69,25 @@ public class FileHelper {
         return result;
     }
 
-    public static String cat(String path) throws FileNotFoundException {
+    public static @NotNull String cat(String path) throws IOException {
         File file = new File(path);
 
         StringBuilder result = new StringBuilder();
 
-        try (FileInputStream input = new FileInputStream(file)) {
-            int i;
+        FileInputStream input = new FileInputStream(file);
 
-            while ((i = input.read()) != -1) {
-                result.append((char) i);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        int i;
+        while ((i = input.read()) != -1) {
+            result.append((char) i);
         }
+
+        input.close();
 
         return result.toString();
     }
 
     public static boolean rm(String path) {
-        File file = new File(path);
-
-        return file.delete();
+        return new File(path).delete();
     }
 
     public static boolean mv(String from, String to) {
@@ -105,6 +111,10 @@ public class FileHelper {
         }
 
         return buffer1.toString().equals(buffer2.toString());
+    }
+
+    public static String help(String commandName) {
+        return informationAboutCommands.getOrDefault(commandName, COMMAND_NOT_FOUND_ERROR_TEXT + commandName);
     }
 
 }
